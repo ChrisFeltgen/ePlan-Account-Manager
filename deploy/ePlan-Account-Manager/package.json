@@ -1,0 +1,14 @@
+{
+  "name": "eplan-account-manager",
+  "version": "1.0.0",
+  "description": "Staff tool: bulk add/remove a ProjectDox account's access to projects (Applicant / View Only Public). Each staff member logs in with their own ProjectDox account for identity/role checks; all actual data operations run under a shared SA service account (PROJECTDOX_ADMIN_EMAIL/PASSWORD).",
+  "private": true,
+  "main": "bulk-add-account-server.js",
+  "scripts": {
+    "start": "node bulk-add-account-server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}
