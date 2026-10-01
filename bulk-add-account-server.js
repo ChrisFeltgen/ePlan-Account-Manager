@@ -127,8 +127,17 @@ function getSession(req) {
   return { token, ...s };
 }
 
+// Staff are all in Florida, and the activity log viewer renders `at` with
+// toLocaleTimeString() (the browser's local time, Eastern) - so log files
+// must be bucketed by Eastern calendar date too, or entries after ~8pm
+// Eastern land in tomorrow's UTC-dated file. Intl handles the EST/EDT
+// switch automatically; en-CA formats as YYYY-MM-DD.
+const LOG_TIMEZONE = 'America/New_York';
+const logDateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: LOG_TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' });
+function localLogDate(d) { return logDateFormatter.format(d); }
+
 function auditLog(entry) {
-  const day = new Date().toISOString().slice(0, 10);
+  const day = localLogDate(new Date());
   const line = JSON.stringify({ at: new Date().toISOString(), ...entry }) + '\n';
   fs.appendFile(path.join(LOG_DIR, `${day}.jsonl`), line, () => {}); // best-effort; never blocks/fails the request
 }
@@ -452,7 +461,7 @@ const server = http.createServer((req, res) => {
       await withSession(async (req, res, url, session) => {
         if (!session.isSystemAdmin) { sendJson(res, 403, { ok: false, reason: 'forbidden' }); return; }
         const requested = url.searchParams.get('date') || '';
-        const date = DATE_RE.test(requested) ? requested : new Date().toISOString().slice(0, 10);
+        const date = DATE_RE.test(requested) ? requested : localLogDate(new Date());
         sendJson(res, 200, { ok: true, date, entries: readAuditLog(date) });
       })(req, res, url);
       return;
